@@ -17,6 +17,15 @@
         }
       ],
       "caches": ["npm-cache"]
+    },
+    "build": {
+      "commands": [
+        "...",
+        {
+          "cmd": "npm run build:web",
+          "customName": "Build static web app"
+        }
+      ]
     }
   },
   "caches": {
@@ -24,6 +33,16 @@
       "directory": "/root/.npm",
       "type": "shared"
     }
+  },
+  "deploy": {
+    "inputs": [
+      "...",
+      {
+        "step": "build",
+        "include": ["web-build"]
+      }
+    ],
+    "startCommand": "npx serve web-build -s -l $PORT"
   }
 }
 
