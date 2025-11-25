@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "serve web-build -s -l ${PORT:-3000}",
+    "start": "expo start",
     "dev": "expo start",
     "web": "expo start --web",
     "build:web": "expo export:web",
