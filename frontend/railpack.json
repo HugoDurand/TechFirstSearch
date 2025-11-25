@@ -2,36 +2,14 @@
   "$schema": "https://schema.railpack.com",
   "steps": {
     "install": {
-      "inputs": [
-        {
-          "local": true,
-          "include": ["package.json", "package-lock.json"]
-        }
-      ],
       "commands": [
+        "...",
         {
           "cmd": "npm install --legacy-peer-deps --prefer-offline --no-audit --no-fund",
-          "customName": "Install dependencies"
+          "customName": "Install dependencies with legacy peer deps"
         }
       ],
       "caches": ["npm-cache"]
-    },
-    "build": {
-      "inputs": [
-        {
-          "step": "install"
-        },
-        {
-          "local": true,
-          "include": ["."]
-        }
-      ],
-      "commands": [
-        {
-          "cmd": "npm run build:web",
-          "customName": "Build web application"
-        }
-      ]
     }
   },
   "caches": {
@@ -39,15 +17,6 @@
       "directory": "/root/.npm",
       "type": "shared"
     }
-  },
-  "deploy": {
-    "inputs": [
-      {
-        "step": "build",
-        "include": ["web-build"]
-      }
-    ],
-    "startCommand": "npm run start"
   }
 }
 
