@@ -11,8 +11,8 @@ WORKDIR /app
 # Copy the files to the container image
 COPY package*.json ./
 
-# Install packages
-RUN npm ci --legacy-peer-deps
+# Install packages with timeout and verbose logging
+RUN npm install --legacy-peer-deps --prefer-offline --no-audit --no-fund --loglevel=info
 
 # Copy local code to the container image
 COPY . ./
