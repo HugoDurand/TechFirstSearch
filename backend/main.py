@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException, Query
+from fastapi import FastAPI, Depends, HTTPException, Query, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from typing import Optional
@@ -41,6 +41,62 @@ async def startup_event():
 @app.get("/")
 async def root():
     return {"message": "TechFirstSearch API", "version": "1.0.0"}
+
+
+@app.get("/api/admin/sources")
+async def list_sources(db: Session = Depends(get_db)):
+    total = db.query(Source).count()
+    sources = db.query(Source).limit(5).all()
+    return {
+        "total": total,
+        "sample": [{"id": s.id, "name": s.name, "feed_url": s.feed_url[:50] + "..."} for s in sources]
+    }
+
+
+@app.post("/api/admin/seed-sources")
+async def seed_sources_endpoint(db: Session = Depends(get_db)):
+    try:
+        from seed_sources import seed_sources
+        seed_sources()
+        total_sources = db.query(Source).count()
+        return {"status": "success", "message": f"Seeded {total_sources} sources"}
+    except Exception as e:
+        logger.error(f"Failed to seed sources: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/admin/fetch-one")
+async def fetch_one_source(db: Session = Depends(get_db)):
+    try:
+        from content_fetcher import RSSFetcher, ContentAggregator
+        source = db.query(Source).filter(Source.name == "TechCrunch").first()
+        if not source:
+            return {"error": "TechCrunch source not found"}
+        
+        items = RSSFetcher.fetch(source.feed_url, source.name)
+        items_to_process = items[:5]  # Just first 5
+        aggregator = ContentAggregator(db)
+        aggregator.process_and_store(items_to_process)
+        
+        return {"status": "success", "source": source.name, "fetched": len(items), "processed": len(items_to_process)}
+    except Exception as e:
+        import traceback
+        return {"error": str(e), "traceback": traceback.format_exc()}
+
+
+def background_content_fetch():
+    try:
+        from content_fetcher import run_content_fetch
+        run_content_fetch()
+        logger.info("Background content fetch completed")
+    except Exception as e:
+        logger.error(f"Background fetch failed: {str(e)}")
+
+
+@app.post("/api/admin/fetch-content")
+async def fetch_content_endpoint(background_tasks: BackgroundTasks):
+    background_tasks.add_task(background_content_fetch)
+    return {"status": "started", "message": "Content fetch started in background"}
 
 
 @app.get("/api/health", response_model=HealthResponse)
