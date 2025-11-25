@@ -1,34 +1,37 @@
-# Build stage
-FROM node:18-alpine AS builder
+# Use the Node alpine official image
+FROM node:lts-alpine AS build
 
+# Set config
+ENV NPM_CONFIG_UPDATE_NOTIFIER=false
+ENV NPM_CONFIG_FUND=false
+
+# Create and change to the app directory
 WORKDIR /app
 
-# Copy package files
-COPY package.json package-lock.json ./
+# Copy the files to the container image
+COPY package*.json ./
 
-# Install dependencies
-RUN npm install --legacy-peer-deps
+# Install packages
+RUN npm ci --legacy-peer-deps
 
-# Copy source code
-COPY . .
+# Copy local code to the container image
+COPY . ./
 
-# Build for web
+# Build the app
 RUN npm run build:web
 
-# Production stage
-FROM node:18-alpine
+# Use the Caddy image
+FROM caddy
 
+# Create and change to the app directory
 WORKDIR /app
 
-# Install serve globally
-RUN npm install -g serve
+# Copy Caddyfile to the container image
+COPY Caddyfile ./
 
-# Copy built files from builder
-COPY --from=builder /app/web-build ./web-build
+# Copy files to the container image
+COPY --from=build /app/web-build ./dist
 
-# Expose port (Railway will override with $PORT)
-EXPOSE 3000
-
-# Start command using Railway's PORT env var
-CMD serve web-build -s -l ${PORT:-3000}
+# Use Caddy to run/serve the app
+CMD ["caddy", "run", "--config", "Caddyfile", "--adapter", "caddyfile"]
 
