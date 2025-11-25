@@ -42,7 +42,7 @@
         "include": ["web-build"]
       }
     ],
-    "startCommand": "npx serve web-build -s -l $PORT"
+    "startCommand": "npx serve web-build -s -p ${PORT:-3000}"
   }
 }
 
