@@ -1,4 +1,24 @@
-export const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || process.env.API_BASE_URL || 'http://localhost:8000';
+function getApiBaseUrl(): string {
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      return 'http://localhost:8000';
+    }
+    
+    if (hostname === 'techfirstsearch.com' || hostname.includes('techfirstsearch')) {
+      return 'https://techfirstsearch-production.up.railway.app';
+    }
+    
+    if (hostname.includes('railway.app')) {
+      return 'https://techfirstsearch-production.up.railway.app';
+    }
+  }
+  
+  return process.env.EXPO_PUBLIC_API_BASE_URL || 'http://localhost:8000';
+}
+
+export const API_BASE_URL = getApiBaseUrl();
 
 export const ENDPOINTS = {
   FEED: `${API_BASE_URL}/api/feed`,
