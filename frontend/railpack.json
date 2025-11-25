@@ -3,10 +3,17 @@
   "steps": {
     "install": {
       "commands": [
-        "...",
+        {
+          "src": "package.json",
+          "dest": "package.json"
+        },
+        {
+          "src": "package-lock.json",
+          "dest": "package-lock.json"
+        },
         {
           "cmd": "npm install --legacy-peer-deps --prefer-offline --no-audit --no-fund",
-          "customName": "Install dependencies with legacy peer deps"
+          "customName": "Install dependencies"
         }
       ],
       "caches": ["npm-cache"]
