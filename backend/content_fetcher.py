@@ -15,6 +15,16 @@ from database import SessionLocal
 
 logger = logging.getLogger(__name__)
 
+BROWSER_HEADERS = {
+    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+    'Accept-Language': 'en-US,en;q=0.5',
+    'Accept-Encoding': 'gzip, deflate, br',
+    'DNT': '1',
+    'Connection': 'keep-alive',
+    'Upgrade-Insecure-Requests': '1',
+}
+
 
 class URLNormalizer:
     TRACKING_PARAMS = {
@@ -139,8 +149,8 @@ class ReaderModeExtractor:
             import requests
             from bs4 import BeautifulSoup
             
-            # Fetch the HTML content
-            response = requests.get(url, timeout=10)
+            # Fetch the HTML content with browser-like headers
+            response = requests.get(url, timeout=10, headers=BROWSER_HEADERS)
             response.raise_for_status()
             html_content = response.text
             
@@ -362,11 +372,7 @@ class ImageExtractor:
     def extract_from_url(url: str) -> Optional[str]:
         """Extract image URL by fetching and parsing the URL"""
         try:
-            response = requests.get(
-                url, 
-                timeout=5,
-                headers={'User-Agent': 'Mozilla/5.0 (compatible; TechLearningBot/1.0)'}
-            )
+            response = requests.get(url, timeout=5, headers=BROWSER_HEADERS)
             return ImageExtractor.extract_from_html(response.text)
         except Exception as e:
             logger.debug(f"Could not extract image from {url}: {str(e)}")
