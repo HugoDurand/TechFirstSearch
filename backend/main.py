@@ -117,6 +117,41 @@ async def fetch_content_sync_endpoint(db: Session = Depends(get_db)):
         return {"status": "error", "error": str(e), "traceback": traceback.format_exc()}
 
 
+@app.post("/api/admin/update-thumbnails")
+async def update_thumbnails_endpoint(db: Session = Depends(get_db), limit: int = Query(default=50)):
+    try:
+        from content_fetcher import ImageExtractor
+        
+        articles_without_thumb = db.query(Content).filter(
+            Content.thumbnail_url == None,
+            Content.is_active == True
+        ).limit(limit).all()
+        
+        updated = 0
+        errors = []
+        for article in articles_without_thumb:
+            try:
+                thumbnail = ImageExtractor.extract_from_url(article.url)
+                if thumbnail:
+                    article.thumbnail_url = thumbnail[:2048]
+                    db.commit()
+                    updated += 1
+                    logger.info(f"Updated thumbnail for: {article.title[:50]}")
+            except Exception as e:
+                errors.append(f"{article.url}: {str(e)}")
+                db.rollback()
+        
+        return {
+            "status": "completed",
+            "checked": len(articles_without_thumb),
+            "updated": updated,
+            "errors": errors[:5]
+        }
+    except Exception as e:
+        import traceback
+        return {"status": "error", "error": str(e), "traceback": traceback.format_exc()}
+
+
 @app.get("/api/health", response_model=HealthResponse)
 async def health_check(db: Session = Depends(get_db)):
     try:
