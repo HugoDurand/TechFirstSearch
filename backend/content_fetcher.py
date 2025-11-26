@@ -363,6 +363,19 @@ class ImageExtractor:
                     if src and src.startswith('http'):
                         return src
             
+            # Fallback: find any img tag with http URL (for RSS content)
+            for img in soup.find_all('img'):
+                src = img.get('src') or img.get('data-src')
+                if src and src.startswith('http'):
+                    # Skip tiny tracking pixels
+                    width = img.get('width', '999')
+                    height = img.get('height', '999')
+                    try:
+                        if int(width) > 10 and int(height) > 10:
+                            return src
+                    except (ValueError, TypeError):
+                        return src
+            
             return None
         except Exception as e:
             logger.warning(f"Failed to extract image from HTML: {e}")
@@ -400,6 +413,16 @@ class RSSFetcher:
                     thumbnail = entry.media_thumbnail[0]['url']
                 elif hasattr(entry, 'media_content') and entry.media_content:
                     thumbnail = entry.media_content[0]['url']
+                
+                if not thumbnail:
+                    content_html = ''
+                    if hasattr(entry, 'content') and entry.content:
+                        content_html = entry.content[0].get('value', '')
+                    elif hasattr(entry, 'summary'):
+                        content_html = entry.summary
+                    
+                    if content_html:
+                        thumbnail = ImageExtractor.extract_from_html(content_html)
                 
                 if not thumbnail:
                     thumbnail = ImageExtractor.extract_from_url(entry.link)
