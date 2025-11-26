@@ -565,14 +565,22 @@ class ContentAggregator:
                 if not thumbnail_url and extracted_image_url:
                     thumbnail_url = extracted_image_url
                 
+                author = item.get('author', '')
+                if author and len(author) > 200:
+                    author = author[:197] + '...'
+                
+                title = item['title']
+                if title and len(title) > 500:
+                    title = title[:497] + '...'
+                
                 content = Content(
-                    title=item['title'],
+                    title=title,
                     url=item['url'],
                     source_name=item['source_name'],
                     content_type=content_type,
                     published_date=item['published_date'],
-                    thumbnail_url=thumbnail_url,
-                    author=item.get('author'),
+                    thumbnail_url=thumbnail_url[:2048] if thumbnail_url else None,
+                    author=author if author else None,
                     tags=item.get('tags'),
                     full_content=full_content,
                     reader_mode_content=reader_content
