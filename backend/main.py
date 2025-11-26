@@ -99,6 +99,24 @@ async def fetch_content_endpoint(background_tasks: BackgroundTasks):
     return {"status": "started", "message": "Content fetch started in background"}
 
 
+@app.post("/api/admin/fetch-content-sync")
+async def fetch_content_sync_endpoint(db: Session = Depends(get_db)):
+    try:
+        from content_fetcher import ContentAggregator
+        aggregator = ContentAggregator(db)
+        results = aggregator.fetch_all_sources()
+        
+        total_content = db.query(Content).filter(Content.is_active == True).count()
+        return {
+            "status": "completed",
+            "total_content_now": total_content,
+            "message": "Sync fetch completed"
+        }
+    except Exception as e:
+        import traceback
+        return {"status": "error", "error": str(e), "traceback": traceback.format_exc()}
+
+
 @app.get("/api/health", response_model=HealthResponse)
 async def health_check(db: Session = Depends(get_db)):
     try:
