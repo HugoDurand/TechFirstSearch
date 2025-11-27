@@ -97,13 +97,13 @@ const PrivacyPolicyScreen: React.FC = () => {
           style={styles.email}
           onPress={() => {
             if (Platform.OS === 'web') {
-              window.open('mailto:privacy@techfirstsearch.com', '_blank');
+              window.open('mailto:hugosmails94@gmail.com', '_blank');
             } else {
-              Linking.openURL('mailto:privacy@techfirstsearch.com');
+              Linking.openURL('mailto:hugosmails94@gmail.com');
             }
           }}
         >
-          privacy@techfirstsearch.com
+          hugosmails94@gmail.com
         </Text>
       </View>
 
