@@ -247,6 +247,50 @@ async def get_article(
         raise HTTPException(status_code=500, detail="Failed to fetch article")
 
 
+from fastapi.responses import Response
+
+@app.get("/sitemap.xml")
+async def sitemap(db: Session = Depends(get_db)):
+    base_url = "https://techfirstsearch.com"
+    
+    articles = db.query(Content).filter(
+        Content.is_active == True
+    ).order_by(Content.published_date.desc()).limit(1000).all()
+    
+    urls = [f'''  <url>
+    <loc>{base_url}</loc>
+    <changefreq>hourly</changefreq>
+    <priority>1.0</priority>
+  </url>''']
+    
+    for article in articles:
+        last_mod = article.published_date.strftime('%Y-%m-%d') if article.published_date else ''
+        urls.append(f'''  <url>
+    <loc>{base_url}/article/{article.id}</loc>
+    <lastmod>{last_mod}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>''')
+    
+    xml = f'''<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+{chr(10).join(urls)}
+</urlset>'''
+    
+    return Response(content=xml, media_type="application/xml")
+
+
+@app.get("/robots.txt")
+async def robots():
+    content = """User-agent: *
+Allow: /
+Disallow: /api/admin/
+
+Sitemap: https://techfirstsearch.com/sitemap.xml
+"""
+    return Response(content=content, media_type="text/plain")
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(

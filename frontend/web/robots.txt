@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /api/admin/
+
+Sitemap: https://techfirstsearch.com/sitemap.xml
+

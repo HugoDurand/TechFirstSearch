@@ -16,6 +16,7 @@ import { RouteProp, useRoute } from '@react-navigation/native';
 import { RootStackParamList } from '../../App';
 import { fetchArticle } from '../services/api';
 import { ContentDetail } from '../types';
+import { SEO } from '../components/SEO';
 import { darkTheme } from '../theme';
 
 type ContentViewerRouteProp = RouteProp<RootStackParamList, 'ContentViewer'>;
@@ -243,8 +244,24 @@ const ContentViewerScreen: React.FC = () => {
     },
   };
 
+  const description = article.reader_mode_content 
+    ? article.reader_mode_content.substring(0, 160).replace(/\n/g, ' ') + '...'
+    : `${article.title} - from ${article.source_name}`;
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
+      <SEO
+        title={article.title}
+        description={description}
+        canonicalUrl={articleUrl}
+        imageUrl={article.thumbnail_url || undefined}
+        article={{
+          publishedDate: article.published_date,
+          author: article.author || undefined,
+          source: article.source_name,
+          tags: article.content_type ? [article.content_type] : undefined,
+        }}
+      />
       <View style={styles.header}>
         <Text style={styles.title}>{article.title}</Text>
         

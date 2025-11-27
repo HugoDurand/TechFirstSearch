@@ -1,8 +1,10 @@
 import React from 'react';
+import { Platform } from 'react-native';
 import { NavigationContainer, LinkingOptions } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { StatusBar } from 'expo-status-bar';
 import * as Linking from 'expo-linking';
+import { HelmetProvider } from 'react-helmet-async';
 import FeedScreen from './src/screens/FeedScreen';
 import ContentViewerScreen from './src/screens/ContentViewerScreen';
 import { ContentProvider } from './src/context/ContentContext';
@@ -48,7 +50,7 @@ export default function App() {
     },
   };
 
-  return (
+  const content = (
     <ContentProvider>
       <NavigationContainer 
         theme={navigationTheme}
@@ -57,7 +59,7 @@ export default function App() {
           formatter: (options, route) => 
             route?.name === 'ContentViewer' 
               ? `${route.params?.title || 'Article'} | TechFirstSearch`
-              : 'TechFirstSearch',
+              : 'TechFirstSearch - Tech News & AI Research Aggregator',
         }}
       >
         <Stack.Navigator
@@ -91,4 +93,10 @@ export default function App() {
       </NavigationContainer>
     </ContentProvider>
   );
+
+  if (Platform.OS === 'web') {
+    return <HelmetProvider>{content}</HelmetProvider>;
+  }
+
+  return content;
 }

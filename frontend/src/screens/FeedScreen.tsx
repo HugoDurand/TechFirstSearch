@@ -13,6 +13,7 @@ import { RootStackParamList } from '../../App';
 import { useContent } from '../context/ContentContext';
 import ContentCard from '../components/ContentCard';
 import SearchBar from '../components/SearchBar';
+import { HomeSEO } from '../components/SEO';
 import { Content } from '../types';
 import { darkTheme } from '../theme';
 
@@ -81,6 +82,7 @@ const FeedScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
+      <HomeSEO />
       <View style={styles.contentWrapper}>
         <SearchBar onSearch={handleSearch} placeholder="Search by title..." />
         <FlatList
