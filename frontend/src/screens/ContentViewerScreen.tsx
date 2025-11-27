@@ -90,13 +90,36 @@ const ContentViewerScreen: React.FC = () => {
     }
   }, [contentId]);
 
+  const isContentCorrupted = (content: string): boolean => {
+    if (!content || content.length < 100) return true;
+    const nonPrintableCount = (content.match(/[\x00-\x1F\x7F-\x9F]/g) || []).length;
+    const ratio = nonPrintableCount / content.length;
+    return ratio > 0.05;
+  };
+
+  const getDisplayContent = (article: ContentDetail): string | null => {
+    if (article.full_content && !isContentCorrupted(article.full_content)) {
+      return article.full_content;
+    }
+    if (article.reader_mode_content && article.reader_mode_content.trim().length > 100) {
+      const paragraphs = article.reader_mode_content
+        .split('\n\n')
+        .filter(p => p.trim())
+        .map(p => `<p>${p}</p>`)
+        .join('');
+      return `<div>${paragraphs}</div>`;
+    }
+    return null;
+  };
+
   const loadArticle = async () => {
     try {
       const data = await fetchArticle(contentId);
       setArticle(data);
       setArticleUrl(data.url || paramUrl || '');
       
-      if (!data.full_content || data.full_content.trim().length < 200) {
+      const displayContent = getDisplayContent(data);
+      if (!displayContent) {
         setUseWebView(true);
       }
     } catch (err) {
@@ -241,7 +264,7 @@ const ContentViewerScreen: React.FC = () => {
       <View style={styles.content}>
         <RenderHtml
           contentWidth={Math.min(width, 900)}
-          source={{ html: article.full_content }}
+          source={{ html: getDisplayContent(article) || '' }}
           tagsStyles={htmlStyles}
           baseStyle={{
             color: darkTheme.text.secondary,
