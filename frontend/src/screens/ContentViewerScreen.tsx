@@ -20,6 +20,60 @@ import { darkTheme } from '../theme';
 
 type ContentViewerRouteProp = RouteProp<RootStackParamList, 'ContentViewer'>;
 
+const WebIframeViewer: React.FC<{ url: string }> = ({ url }) => {
+  const [iframeError, setIframeError] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  if (iframeError) {
+    return (
+      <View style={styles.centerContainer}>
+        <Text style={styles.title}>Cannot Display In-App</Text>
+        <Text style={styles.fallbackText}>
+          This website doesn't allow embedding. Open it in a new tab instead.
+        </Text>
+        <TouchableOpacity
+          style={styles.linkButton}
+          onPress={() => window.open(url, '_blank')}
+        >
+          <Text style={styles.linkButtonText}>Open in New Tab →</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.iframeContainer}>
+      {loading && (
+        <View style={styles.iframeLoading}>
+          <ActivityIndicator size="large" color={darkTheme.contentTypes.paper} />
+          <Text style={styles.loadingText}>Loading article...</Text>
+        </View>
+      )}
+      <iframe
+        src={url}
+        style={{
+          width: '100%',
+          height: '100%',
+          border: 'none',
+          display: loading ? 'none' : 'block',
+        }}
+        onLoad={() => setLoading(false)}
+        onError={() => setIframeError(true)}
+        sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+        referrerPolicy="no-referrer"
+      />
+      <View style={styles.iframeFooter}>
+        <TouchableOpacity
+          style={styles.openExternalButton}
+          onPress={() => window.open(url, '_blank')}
+        >
+          <Text style={styles.openExternalText}>Open in New Tab ↗</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+};
+
 const ContentViewerScreen: React.FC = () => {
   const route = useRoute<ContentViewerRouteProp>();
   const { contentId, url } = route.params;
@@ -67,32 +121,10 @@ const ContentViewerScreen: React.FC = () => {
     );
   }
 
-  // Web platform doesn't support WebView
   if (useWebView || !article || !article.full_content) {
     if (Platform.OS === 'web') {
-      // On web, provide a link to open in new tab
-      return (
-        <View style={styles.centerContainer}>
-          <Text style={styles.title}>Content Not Available</Text>
-          <Text style={styles.fallbackText}>
-            This content couldn't be extracted for viewing in the app.
-          </Text>
-          <TouchableOpacity
-            style={styles.linkButton}
-            onPress={() => {
-              if (Platform.OS === 'web') {
-                window.open(url, '_blank');
-              } else {
-                Linking.openURL(url);
-              }
-            }}
-          >
-            <Text style={styles.linkButtonText}>Open Original Article →</Text>
-          </TouchableOpacity>
-        </View>
-      );
+      return <WebIframeViewer url={url} />;
     } else {
-      // On mobile, use WebView
       return (
         <WebView
           source={{ uri: url }}
@@ -240,6 +272,43 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: darkTheme.background.primary,
   },
+  iframeContainer: {
+    flex: 1,
+    backgroundColor: darkTheme.background.primary,
+    // @ts-ignore - web only
+    height: '100vh',
+  },
+  iframeLoading: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: darkTheme.background.primary,
+    zIndex: 1,
+  },
+  iframeFooter: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    padding: 12,
+    alignItems: 'center',
+  },
+  openExternalButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: darkTheme.contentTypes.paper,
+    borderRadius: 6,
+  },
+  openExternalText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
+  },
   header: {
     padding: 20,
     borderBottomWidth: 1,
@@ -323,4 +392,3 @@ const styles = StyleSheet.create({
 });
 
 export default ContentViewerScreen;
-
