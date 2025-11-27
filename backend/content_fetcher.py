@@ -26,6 +26,39 @@ BROWSER_HEADERS = {
 }
 
 
+class ArxivURLConverter:
+    @staticmethod
+    def is_arxiv_url(url: str) -> bool:
+        return 'arxiv.org' in url
+    
+    @staticmethod
+    def get_arxiv_id(url: str) -> Optional[str]:
+        patterns = [
+            r'arxiv\.org/abs/(\d+\.\d+)',
+            r'arxiv\.org/pdf/(\d+\.\d+)',
+            r'arxiv\.org/html/(\d+\.\d+)',
+        ]
+        for pattern in patterns:
+            match = re.search(pattern, url)
+            if match:
+                return match.group(1)
+        return None
+    
+    @staticmethod
+    def to_html_url(url: str) -> str:
+        arxiv_id = ArxivURLConverter.get_arxiv_id(url)
+        if arxiv_id:
+            return f'https://arxiv.org/html/{arxiv_id}v1'
+        return url
+    
+    @staticmethod
+    def to_abs_url(url: str) -> str:
+        arxiv_id = ArxivURLConverter.get_arxiv_id(url)
+        if arxiv_id:
+            return f'https://arxiv.org/abs/{arxiv_id}'
+        return url
+
+
 class URLNormalizer:
     TRACKING_PARAMS = {
         'source', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term',
@@ -149,8 +182,14 @@ class ReaderModeExtractor:
             import requests
             from bs4 import BeautifulSoup
             
+            # For ArXiv, use the HTML version for better content extraction
+            fetch_url = url
+            if ArxivURLConverter.is_arxiv_url(url):
+                fetch_url = ArxivURLConverter.to_html_url(url)
+                logger.info(f"ArXiv detected, using HTML version: {fetch_url}")
+            
             # Fetch the HTML content with browser-like headers
-            response = requests.get(url, timeout=10, headers=BROWSER_HEADERS)
+            response = requests.get(fetch_url, timeout=10, headers=BROWSER_HEADERS)
             response.raise_for_status()
             html_content = response.text
             
@@ -385,7 +424,12 @@ class ImageExtractor:
     def extract_from_url(url: str) -> Optional[str]:
         """Extract image URL by fetching and parsing the URL"""
         try:
-            response = requests.get(url, timeout=5, headers=BROWSER_HEADERS)
+            # For ArXiv, use the HTML version for better image extraction
+            fetch_url = url
+            if ArxivURLConverter.is_arxiv_url(url):
+                fetch_url = ArxivURLConverter.to_html_url(url)
+            
+            response = requests.get(fetch_url, timeout=5, headers=BROWSER_HEADERS)
             return ImageExtractor.extract_from_html(response.text)
         except Exception as e:
             logger.debug(f"Could not extract image from {url}: {str(e)}")

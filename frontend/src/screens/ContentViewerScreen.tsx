@@ -21,6 +21,24 @@ import { darkTheme } from '../theme';
 
 type ContentViewerRouteProp = RouteProp<RootStackParamList, 'ContentViewer'>;
 
+const getArxivHtmlUrl = (url: string): string => {
+  if (!url.includes('arxiv.org')) return url;
+  
+  const patterns = [
+    /arxiv\.org\/abs\/(\d+\.\d+)/,
+    /arxiv\.org\/pdf\/(\d+\.\d+)/,
+  ];
+  
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match) {
+      return `https://arxiv.org/html/${match[1]}v1`;
+    }
+  }
+  
+  return url;
+};
+
 const WebIframeViewer: React.FC<{ url: string }> = ({ url }) => {
   const [iframeError, setIframeError] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -117,7 +135,10 @@ const ContentViewerScreen: React.FC = () => {
     try {
       const data = await fetchArticle(contentId);
       setArticle(data);
-      setArticleUrl(data.url || paramUrl || '');
+      
+      // For ArXiv, use the HTML version for better viewing
+      const url = data.url || paramUrl || '';
+      setArticleUrl(getArxivHtmlUrl(url));
       
       const displayContent = getDisplayContent(data);
       if (!displayContent) {
