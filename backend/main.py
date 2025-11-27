@@ -152,6 +152,45 @@ async def update_thumbnails_endpoint(db: Session = Depends(get_db), limit: int =
         return {"status": "error", "error": str(e), "traceback": traceback.format_exc()}
 
 
+@app.post("/api/admin/refresh-arxiv-thumbnails")
+async def refresh_arxiv_thumbnails(limit: int = 100, db: Session = Depends(get_db)):
+    try:
+        from content_fetcher import ImageExtractor, ArxivURLConverter
+        
+        arxiv_articles = db.query(Content).filter(
+            Content.is_active == True,
+            Content.url.contains('arxiv.org')
+        ).limit(limit).all()
+        
+        updated = 0
+        errors = []
+        
+        for article in arxiv_articles:
+            try:
+                html_url = ArxivURLConverter.to_html_url(article.url)
+                new_thumbnail = ImageExtractor.extract_from_url(html_url)
+                
+                if new_thumbnail and new_thumbnail != article.thumbnail_url:
+                    article.thumbnail_url = new_thumbnail[:2048]
+                    db.add(article)
+                    db.commit()
+                    updated += 1
+                    logger.info(f"Updated ArXiv thumbnail: {article.title[:50]}")
+            except Exception as e:
+                errors.append(f"{article.url}: {str(e)}")
+                db.rollback()
+        
+        return {
+            "status": "completed",
+            "arxiv_articles_checked": len(arxiv_articles),
+            "updated": updated,
+            "errors": errors[:5]
+        }
+    except Exception as e:
+        import traceback
+        return {"status": "error", "error": str(e), "traceback": traceback.format_exc()}
+
+
 @app.get("/api/health", response_model=HealthResponse)
 async def health_check(db: Session = Depends(get_db)):
     try:
