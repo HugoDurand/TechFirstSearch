@@ -191,6 +191,50 @@ async def refresh_arxiv_thumbnails(limit: int = 100, db: Session = Depends(get_d
         return {"status": "error", "error": str(e), "traceback": traceback.format_exc()}
 
 
+@app.post("/api/admin/refresh-arxiv-content")
+async def refresh_arxiv_content(limit: int = 50, db: Session = Depends(get_db)):
+    try:
+        from content_fetcher import ReaderModeExtractor, ImageExtractor, ArxivURLConverter
+        
+        arxiv_articles = db.query(Content).filter(
+            Content.is_active == True,
+            Content.url.contains('arxiv.org')
+        ).order_by(Content.published_date.desc()).limit(limit).all()
+        
+        updated = 0
+        errors = []
+        
+        for article in arxiv_articles:
+            try:
+                html_url = ArxivURLConverter.to_html_url(article.url)
+                full_content, reader_content, thumbnail = ReaderModeExtractor.extract(article.url)
+                
+                if full_content:
+                    article.full_content = full_content
+                if reader_content:
+                    article.reader_mode_content = reader_content
+                if thumbnail:
+                    article.thumbnail_url = thumbnail[:2048]
+                
+                db.add(article)
+                db.commit()
+                updated += 1
+                logger.info(f"Refreshed ArXiv content: {article.title[:50]}")
+            except Exception as e:
+                errors.append(f"{article.url}: {str(e)}")
+                db.rollback()
+        
+        return {
+            "status": "completed",
+            "arxiv_articles_checked": len(arxiv_articles),
+            "updated": updated,
+            "errors": errors[:5]
+        }
+    except Exception as e:
+        import traceback
+        return {"status": "error", "error": str(e), "traceback": traceback.format_exc()}
+
+
 @app.get("/api/health", response_model=HealthResponse)
 async def health_check(db: Session = Depends(get_db)):
     try:
