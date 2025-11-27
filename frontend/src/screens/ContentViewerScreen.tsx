@@ -131,6 +131,10 @@ const ContentViewerScreen: React.FC = () => {
     return null;
   };
 
+  const isArxivUrl = (url: string): boolean => {
+    return url.includes('arxiv.org');
+  };
+
   const loadArticle = async () => {
     try {
       const data = await fetchArticle(contentId);
@@ -138,7 +142,15 @@ const ContentViewerScreen: React.FC = () => {
       
       // For ArXiv, use the HTML version for better viewing
       const url = data.url || paramUrl || '';
-      setArticleUrl(getArxivHtmlUrl(url));
+      const processedUrl = getArxivHtmlUrl(url);
+      setArticleUrl(processedUrl);
+      
+      // ArXiv papers have complex LaTeX/MathJax content that doesn't render well
+      // Always use WebView for ArXiv to show the original formatted page
+      if (isArxivUrl(url)) {
+        setUseWebView(true);
+        return;
+      }
       
       const displayContent = getDisplayContent(data);
       if (!displayContent) {
