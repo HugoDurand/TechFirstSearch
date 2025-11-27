@@ -176,6 +176,45 @@ class ContentClassifier:
 
 class ReaderModeExtractor:
     @staticmethod
+    def fix_relative_urls(html_content: str, base_url: str) -> str:
+        """Convert relative URLs to absolute URLs in HTML content"""
+        try:
+            from urllib.parse import urljoin, urlparse
+            soup = BeautifulSoup(html_content, 'html.parser')
+            
+            # Get base domain
+            parsed_base = urlparse(base_url)
+            base_domain = f"{parsed_base.scheme}://{parsed_base.netloc}"
+            
+            # Fix img src attributes
+            for img in soup.find_all('img'):
+                src = img.get('src')
+                if src and not src.startswith(('http://', 'https://', 'data:')):
+                    img['src'] = urljoin(base_domain, src)
+                
+                # Also fix data-src for lazy-loaded images
+                data_src = img.get('data-src')
+                if data_src and not data_src.startswith(('http://', 'https://', 'data:')):
+                    img['data-src'] = urljoin(base_domain, data_src)
+            
+            # Fix a href attributes
+            for a in soup.find_all('a'):
+                href = a.get('href')
+                if href and not href.startswith(('http://', 'https://', 'mailto:', 'tel:', '#', 'javascript:')):
+                    a['href'] = urljoin(base_domain, href)
+            
+            # Fix source src attributes (for video/picture elements)
+            for source in soup.find_all('source'):
+                src = source.get('src')
+                if src and not src.startswith(('http://', 'https://', 'data:')):
+                    source['src'] = urljoin(base_domain, src)
+            
+            return str(soup)
+        except Exception as e:
+            logger.warning(f"Failed to fix relative URLs: {e}")
+            return html_content
+    
+    @staticmethod
     def extract(url: str) -> tuple[Optional[str], Optional[str], Optional[str]]:
         try:
             from readability import Document
@@ -349,6 +388,9 @@ class ReaderModeExtractor:
             
             # Get the cleaned HTML
             clean_html = str(soup)
+            
+            # Convert relative URLs to absolute URLs
+            clean_html = ReaderModeExtractor.fix_relative_urls(clean_html, fetch_url)
             
             # Also use Newspaper3k for plain text extraction
             article = Article(url)
