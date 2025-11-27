@@ -76,21 +76,25 @@ const WebIframeViewer: React.FC<{ url: string }> = ({ url }) => {
 
 const ContentViewerScreen: React.FC = () => {
   const route = useRoute<ContentViewerRouteProp>();
-  const { contentId, url } = route.params;
+  const { contentId, url: paramUrl, title: paramTitle } = route.params || {};
   const { width } = useWindowDimensions();
   
   const [article, setArticle] = useState<ContentDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [useWebView, setUseWebView] = useState(false);
+  const [articleUrl, setArticleUrl] = useState(paramUrl || '');
 
   useEffect(() => {
-    loadArticle();
+    if (contentId) {
+      loadArticle();
+    }
   }, [contentId]);
 
   const loadArticle = async () => {
     try {
       const data = await fetchArticle(contentId);
       setArticle(data);
+      setArticleUrl(data.url || paramUrl || '');
       
       if (!data.full_content || data.full_content.trim().length < 200) {
         setUseWebView(true);
@@ -121,13 +125,33 @@ const ContentViewerScreen: React.FC = () => {
     );
   }
 
+  if (!contentId) {
+    return (
+      <View style={styles.centerContainer}>
+        <Text style={styles.title}>Article Not Found</Text>
+        <Text style={styles.fallbackText}>
+          The article you're looking for doesn't exist or the link is invalid.
+        </Text>
+      </View>
+    );
+  }
+
   if (useWebView || !article || !article.full_content) {
+    if (!articleUrl) {
+      return (
+        <View style={styles.centerContainer}>
+          <ActivityIndicator size="large" color={darkTheme.contentTypes.paper} />
+          <Text style={styles.loadingText}>Loading...</Text>
+        </View>
+      );
+    }
+    
     if (Platform.OS === 'web') {
-      return <WebIframeViewer url={url} />;
+      return <WebIframeViewer url={articleUrl} />;
     } else {
       return (
         <WebView
-          source={{ uri: url }}
+          source={{ uri: articleUrl }}
           style={styles.webview}
           startInLoadingState={true}
           renderLoading={() => (
@@ -230,13 +254,13 @@ const ContentViewerScreen: React.FC = () => {
         <TouchableOpacity
           onPress={() => {
             if (Platform.OS === 'web') {
-              window.open(url, '_blank');
+              window.open(articleUrl, '_blank');
             } else {
-              Linking.openURL(url);
+              Linking.openURL(articleUrl);
             }
           }}
         >
-          <Text style={styles.sourceLink}>{url}</Text>
+          <Text style={styles.sourceLink}>{articleUrl}</Text>
         </TouchableOpacity>
         <Text style={styles.footerNote}>
           Tap to read the original article

@@ -1,7 +1,8 @@
 import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, LinkingOptions } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { StatusBar } from 'expo-status-bar';
+import * as Linking from 'expo-linking';
 import FeedScreen from './src/screens/FeedScreen';
 import ContentViewerScreen from './src/screens/ContentViewerScreen';
 import { ContentProvider } from './src/context/ContentContext';
@@ -13,6 +14,26 @@ export type RootStackParamList = {
 };
 
 const Stack = createStackNavigator<RootStackParamList>();
+
+const prefix = Linking.createURL('/');
+
+const linking: LinkingOptions<RootStackParamList> = {
+  prefixes: [prefix, 'https://techfirstsearch.com', 'techfirstsearch://'],
+  config: {
+    screens: {
+      Feed: '',
+      ContentViewer: {
+        path: 'article/:contentId',
+        parse: {
+          contentId: (contentId: string) => parseInt(contentId, 10),
+        },
+        stringify: {
+          contentId: (contentId: number) => String(contentId),
+        },
+      },
+    },
+  },
+};
 
 export default function App() {
   const navigationTheme = {
@@ -29,7 +50,16 @@ export default function App() {
 
   return (
     <ContentProvider>
-      <NavigationContainer theme={navigationTheme}>
+      <NavigationContainer 
+        theme={navigationTheme}
+        linking={linking}
+        documentTitle={{
+          formatter: (options, route) => 
+            route?.name === 'ContentViewer' 
+              ? `${route.params?.title || 'Article'} | TechFirstSearch`
+              : 'TechFirstSearch',
+        }}
+      >
         <Stack.Navigator
           initialRouteName="Feed"
           screenOptions={{
@@ -62,4 +92,3 @@ export default function App() {
     </ContentProvider>
   );
 }
-
