@@ -286,6 +286,24 @@ const ContentViewerScreen: React.FC = () => {
           baseStyle={{
             color: darkTheme.text.secondary,
           }}
+          renderersProps={{
+            a: {
+              onPress: (event, href) => {
+                if (!href || href.startsWith('about:') || href.startsWith('javascript:')) {
+                  return;
+                }
+                if (Platform.OS === 'web') {
+                  window.open(href, '_blank');
+                } else {
+                  Linking.canOpenURL(href).then((canOpen) => {
+                    if (canOpen) {
+                      Linking.openURL(href);
+                    }
+                  }).catch(() => {});
+                }
+              },
+            },
+          }}
         />
       </View>
 
