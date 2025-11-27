@@ -5,14 +5,13 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from celery import Celery
 from celery.schedules import crontab
-from config import get_settings
 
-settings = get_settings()
+REDIS_URL = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
 
 celery_app = Celery(
     'techfirstsearch',
-    broker=settings.celery_broker_url,
-    backend=settings.celery_result_backend
+    broker=REDIS_URL,
+    backend=REDIS_URL
 )
 
 celery_app.conf.update(
@@ -21,6 +20,7 @@ celery_app.conf.update(
     result_serializer='json',
     timezone='UTC',
     enable_utc=True,
+    broker_connection_retry_on_startup=True,
 )
 
 celery_app.conf.beat_schedule = {
@@ -40,4 +40,3 @@ def fetch_content_task():
 
 if __name__ == '__main__':
     celery_app.start()
-
