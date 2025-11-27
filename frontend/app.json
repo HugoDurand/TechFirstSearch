@@ -2,6 +2,7 @@
   "expo": {
     "name": "TechFirstSearch",
     "slug": "techfirstsearch",
+    "scheme": "techfirstsearch",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -16,7 +17,8 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.techfirstsearch"
+      "bundleIdentifier": "com.techfirstsearch",
+      "entitlements": {}
     },
     "web": {
       "favicon": "./assets/favicon.png"

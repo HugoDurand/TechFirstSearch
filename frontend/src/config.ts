@@ -1,5 +1,13 @@
+import { Platform } from 'react-native';
+
 function getApiBaseUrl(): string {
-  if (typeof window !== 'undefined') {
+  // Mobile apps always use the production API
+  if (Platform.OS === 'ios' || Platform.OS === 'android') {
+    return 'https://techfirstsearch-production.up.railway.app';
+  }
+  
+  // Web: check hostname
+  if (typeof window !== 'undefined' && window.location?.hostname) {
     const hostname = window.location.hostname;
     
     if (hostname === 'localhost' || hostname === '127.0.0.1') {
@@ -15,7 +23,7 @@ function getApiBaseUrl(): string {
     }
   }
   
-  return process.env.EXPO_PUBLIC_API_BASE_URL || 'http://localhost:8000';
+  return process.env.EXPO_PUBLIC_API_BASE_URL || 'https://techfirstsearch-production.up.railway.app';
 }
 
 export const API_BASE_URL = getApiBaseUrl();
