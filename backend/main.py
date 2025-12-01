@@ -235,6 +235,50 @@ async def refresh_arxiv_content(limit: int = 50, db: Session = Depends(get_db)):
         return {"status": "error", "error": str(e), "traceback": traceback.format_exc()}
 
 
+@app.post("/api/admin/generate-summaries")
+async def generate_ai_summaries(limit: int = 50, db: Session = Depends(get_db)):
+    try:
+        from ai_summarizer import generate_article_summary
+        
+        articles_without_summary = db.query(Content).filter(
+            Content.is_active == True,
+            Content.ai_summary == None
+        ).order_by(Content.published_date.desc()).limit(limit).all()
+        
+        generated = 0
+        errors = []
+        
+        for article in articles_without_summary:
+            try:
+                text_content = article.reader_mode_content or article.full_content
+                ai_summary, ai_key_points = generate_article_summary(
+                    article.title,
+                    text_content,
+                    article.source_name
+                )
+                
+                if ai_summary:
+                    article.ai_summary = ai_summary
+                    article.ai_key_points = ai_key_points
+                    db.add(article)
+                    db.commit()
+                    generated += 1
+                    logger.info(f"Generated summary for: {article.title[:50]}")
+            except Exception as e:
+                errors.append(f"{article.title[:30]}: {str(e)}")
+                db.rollback()
+        
+        return {
+            "status": "completed",
+            "articles_checked": len(articles_without_summary),
+            "summaries_generated": generated,
+            "errors": errors[:5]
+        }
+    except Exception as e:
+        import traceback
+        return {"status": "error", "error": str(e), "traceback": traceback.format_exc()}
+
+
 @app.get("/api/health", response_model=HealthResponse)
 async def health_check(db: Session = Depends(get_db)):
     try:

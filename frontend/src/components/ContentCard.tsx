@@ -52,6 +52,15 @@ const ContentCard: React.FC<ContentCardProps> = ({ content, onPress }) => {
           {content.title}
         </Text>
         
+        {content.ai_summary && (
+          <View style={styles.summaryContainer}>
+            <Text style={styles.summaryLabel}>TL;DR</Text>
+            <Text style={styles.summaryText} numberOfLines={3}>
+              {content.ai_summary}
+            </Text>
+          </View>
+        )}
+        
         <View style={styles.metadata}>
           <Text style={styles.metadataText}>{content.source_name}</Text>
           <Text style={styles.metadataSeparator}>•</Text>
@@ -109,6 +118,26 @@ const styles = StyleSheet.create({
     color: darkTheme.text.primary,
     marginBottom: 8,
     lineHeight: 24,
+  },
+  summaryContainer: {
+    backgroundColor: darkTheme.background.secondary,
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 12,
+    borderLeftWidth: 3,
+    borderLeftColor: darkTheme.contentTypes.paper,
+  },
+  summaryLabel: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: darkTheme.contentTypes.paper,
+    letterSpacing: 1,
+    marginBottom: 4,
+  },
+  summaryText: {
+    fontSize: 14,
+    color: darkTheme.text.secondary,
+    lineHeight: 20,
   },
   metadata: {
     flexDirection: 'row',

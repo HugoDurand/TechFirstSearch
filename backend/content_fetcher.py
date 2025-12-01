@@ -688,6 +688,20 @@ class ContentAggregator:
                 if title and len(title) > 500:
                     title = title[:497] + '...'
                 
+                ai_summary = None
+                ai_key_points = None
+                
+                try:
+                    from ai_summarizer import generate_article_summary
+                    text_for_summary = reader_content or full_content
+                    ai_summary, ai_key_points = generate_article_summary(
+                        title, 
+                        text_for_summary, 
+                        item['source_name']
+                    )
+                except Exception as e:
+                    logger.warning(f"Failed to generate AI summary: {str(e)}")
+                
                 content = Content(
                     title=title,
                     url=item['url'],
@@ -698,7 +712,9 @@ class ContentAggregator:
                     author=author if author else None,
                     tags=item.get('tags'),
                     full_content=full_content,
-                    reader_mode_content=reader_content
+                    reader_mode_content=reader_content,
+                    ai_summary=ai_summary,
+                    ai_key_points=ai_key_points
                 )
                 
                 self.db.add(content)

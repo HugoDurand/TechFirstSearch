@@ -23,6 +23,7 @@ class ContentResponse(ContentBase):
     id: int
     fetched_date: datetime
     created_at: datetime
+    ai_summary: Optional[str] = None
     
     class Config:
         from_attributes = True
@@ -31,6 +32,7 @@ class ContentResponse(ContentBase):
 class ContentDetailResponse(ContentResponse):
     reader_mode_content: Optional[str] = None
     full_content: Optional[str] = None
+    ai_key_points: Optional[List[str]] = None
 
 
 class SourceBase(BaseModel):

@@ -10,11 +10,13 @@ export interface Content {
   tags?: string[];
   fetched_date: string;
   created_at: string;
+  ai_summary?: string;
 }
 
 export interface ContentDetail extends Content {
   reader_mode_content?: string;
   full_content?: string;
+  ai_key_points?: string[];
 }
 
 export interface FeedResponse {
@@ -26,4 +28,3 @@ export interface SearchResponse {
   total: number;
   items: Content[];
 }
-

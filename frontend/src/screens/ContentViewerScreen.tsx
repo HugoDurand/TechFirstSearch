@@ -311,6 +311,29 @@ const ContentViewerScreen: React.FC = () => {
         </View>
       </View>
 
+      {(article.ai_summary || article.ai_key_points?.length) && (
+        <View style={styles.aiSummaryContainer}>
+          {article.ai_summary && (
+            <View style={styles.tldrSection}>
+              <Text style={styles.tldrLabel}>TL;DR</Text>
+              <Text style={styles.tldrText}>{article.ai_summary}</Text>
+            </View>
+          )}
+          
+          {article.ai_key_points && article.ai_key_points.length > 0 && (
+            <View style={styles.keyPointsSection}>
+              <Text style={styles.keyPointsLabel}>KEY POINTS</Text>
+              {article.ai_key_points.map((point, index) => (
+                <View key={index} style={styles.keyPointRow}>
+                  <Text style={styles.keyPointBullet}>•</Text>
+                  <Text style={styles.keyPointText}>{point}</Text>
+                </View>
+              ))}
+            </View>
+          )}
+        </View>
+      )}
+
       <View style={styles.content}>
         <RenderHtml
           contentWidth={Math.min(width, 900)}
@@ -450,6 +473,59 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: darkTheme.text.tertiary,
     marginHorizontal: 8,
+  },
+  aiSummaryContainer: {
+    margin: 20,
+    marginTop: 0,
+    backgroundColor: darkTheme.card.background,
+    borderRadius: 12,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: darkTheme.contentTypes.paper,
+  },
+  tldrSection: {
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: darkTheme.border.primary,
+  },
+  tldrLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: darkTheme.contentTypes.paper,
+    letterSpacing: 1.5,
+    marginBottom: 8,
+  },
+  tldrText: {
+    fontSize: 16,
+    color: darkTheme.text.primary,
+    lineHeight: 24,
+    fontWeight: '500',
+  },
+  keyPointsSection: {
+    padding: 16,
+  },
+  keyPointsLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: darkTheme.text.tertiary,
+    letterSpacing: 1.5,
+    marginBottom: 12,
+  },
+  keyPointRow: {
+    flexDirection: 'row',
+    marginBottom: 8,
+  },
+  keyPointBullet: {
+    fontSize: 16,
+    color: darkTheme.contentTypes.paper,
+    marginRight: 10,
+    lineHeight: 22,
+  },
+  keyPointText: {
+    flex: 1,
+    fontSize: 15,
+    color: darkTheme.text.secondary,
+    lineHeight: 22,
   },
   content: {
     padding: 20,

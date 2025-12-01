@@ -18,6 +18,8 @@ class Content(Base):
     tags = Column(JSON)
     full_content = Column(Text)
     reader_mode_content = Column(Text)
+    ai_summary = Column(Text)
+    ai_key_points = Column(JSON)
     is_active = Column(Boolean, default=True)
     created_at = Column(TIMESTAMP, server_default=func.now())
 
