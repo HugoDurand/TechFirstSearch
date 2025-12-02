@@ -43,6 +43,36 @@ async def root():
     return {"message": "TechFirstSearch API", "version": "1.0.0"}
 
 
+@app.post("/api/admin/migrate-ai-columns")
+async def migrate_ai_columns():
+    from sqlalchemy import text
+    from database import engine
+    
+    results = []
+    with engine.connect() as conn:
+        try:
+            conn.execute(text("ALTER TABLE content ADD COLUMN ai_summary TEXT"))
+            conn.commit()
+            results.append("Added ai_summary column")
+        except Exception as e:
+            if "already exists" in str(e).lower() or "duplicate" in str(e).lower():
+                results.append("ai_summary column already exists")
+            else:
+                results.append(f"Error adding ai_summary: {str(e)}")
+        
+        try:
+            conn.execute(text("ALTER TABLE content ADD COLUMN ai_key_points JSON"))
+            conn.commit()
+            results.append("Added ai_key_points column")
+        except Exception as e:
+            if "already exists" in str(e).lower() or "duplicate" in str(e).lower():
+                results.append("ai_key_points column already exists")
+            else:
+                results.append(f"Error adding ai_key_points: {str(e)}")
+    
+    return {"status": "completed", "results": results}
+
+
 @app.get("/api/admin/sources")
 async def list_sources(db: Session = Depends(get_db)):
     total = db.query(Source).count()
